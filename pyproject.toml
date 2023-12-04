@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "cipheralg"
+version = "0.1.0"
+description = ""
+authors = ["denis.kosarevskij <201137@stud.rguk.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "^2.31.0"
+pip = "^23.3.1"
+customtkinter = "^5.2.1"
+packaging = "^23.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
