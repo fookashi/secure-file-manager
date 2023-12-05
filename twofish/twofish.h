@@ -236,8 +236,11 @@ typedef struct {
   twofish_key* key;
 } twofish_context;
 
+
+typedef void (*ProgressCallback)(float progress);
+
 extern twofish_key* generate_key(uint8_t key[], int key_len);
 extern twofish_context* generate_context(char* iv, int mode, twofish_key* key);
-extern void decrypt_block( twofish_key * xkey, uint8_t c[16], uint8_t p[16]);
-extern void encrypt_block(twofish_key * xkey, uint8_t p[16], uint8_t c[16]);
+extern void encrypt_file(char *filepath, twofish_context *context, char* tmppath, ProgressCallback callback);
+extern void decrypt_file(char *filepath, twofish_context *context, char* tmppath, ProgressCallback callback);
 

@@ -254,11 +254,6 @@ void decrypt_block( twofish_key * xkey, uint8_t c[16], uint8_t p[16])
 
 }
 
-typedef void (*ProgressCallback)(float progress);
-
-void updateProgress(float progress) {
-    printf("Progress: %.2f%%\n", progress);
-}
 
 void encrypt_file(char *filepath, twofish_context *context, char* tmppath, ProgressCallback callback) {
     FILE *fp = fopen(filepath, "rb");

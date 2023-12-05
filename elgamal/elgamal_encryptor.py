@@ -1,12 +1,12 @@
 import random
 from math import ceil
 
-from .utils.transform import int2bytes, bytes2int
+from .interfaces import IRSAEncrypter
 from .keys import ElGamalPrivateKey, ElGamalPublicKey
 
 
 
-class ElGamalEncryptionService:
+class ElGamalEncryptionService(IRSAEncrypter):
 
     def encrypt(self, data: bytes, public_key: ElGamalPublicKey):
         if len(data) == 0:
