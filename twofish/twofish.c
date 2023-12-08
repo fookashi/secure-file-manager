@@ -13,18 +13,10 @@
 #define b3(X) ((X >> 24) & 0xff)
 
 #define GET32( p ) \
-( \
-(uint32_t)((p)[0])    \
-| (uint32_t)((p)[1])<< 8\
-| (uint32_t)((p)[2])<<16\
-| (uint32_t)((p)[3])<<24\
-)
+( (uint32_t)((p)[0]) | (uint32_t)((p)[1])<< 8 | (uint32_t)((p)[2])<<16 | (uint32_t)((p)[3])<<24 )
 
 #define PUT32( v, p ) \
-(p)[0] = (uint8_t)(((v)) & 0xff);\
-(p)[1] = (uint8_t)(((v) >>  8) & 0xff);\
-(p)[2] = (uint8_t)(((v) >> 16) & 0xff);\
-(p)[3] = (uint8_t)(((v) >> 24) & 0xff)
+(p)[0] = (uint8_t)(((v)) & 0xff); (p)[1] = (uint8_t)(((v) >>  8) & 0xff); (p)[2] = (uint8_t)(((v) >> 16) & 0xff); (p)[3] = (uint8_t)(((v) >> 24) & 0xff)
 
 
 #define q0  Q[0]
@@ -63,12 +55,11 @@ static uint32_t h( int k, uint8_t L[], int kCycles )
 
 
 
-
 static void fill_keyed_sboxes( uint8_t S[], int kCycles, twofish_key * xkey )
 {
   int i;
   switch( kCycles ) {
-      /* We code all 3 cases separately for speed reasons. */
+
     case 2:
       for( i=0; i<256; i++ )
       {
@@ -109,13 +100,10 @@ uint8_t gf_mult(uint8_t a, uint8_t b) {
         if (b & 1) {
             result ^= a;
         }
-
-        carry = a & 0x80;
-        a <<= 1;
-        if (carry) {
+        if (a > (a ^ IRRED_POLY)) {
             a ^= IRRED_POLY;
         }
-
+        a <<= 1;
         b >>= 1;
     }
 

@@ -222,7 +222,7 @@ static uint8_t RS[32] = {
 
 typedef enum cmode{ECB, CBC, CFB, OFB}cipher_mode;
 
-static unsigned int IRRED_POLY = 0x11B;
+static unsigned int IRRED_POLY = 0x169;
 
 
 typedef struct {
