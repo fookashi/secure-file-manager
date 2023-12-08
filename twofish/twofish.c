@@ -243,6 +243,29 @@ void decrypt_block( twofish_key * xkey, uint8_t c[16], uint8_t p[16])
 }
 
 
+void add_padding(uint8_t* data, int data_size) {
+    if (data_size == 16) {
+        return;  // No padding needed
+    }
+    int padding_value = 16 - data_size;
+    memset(data+data_size, padding_value, padding_value);
+}
+
+int get_padding(uint8_t data[16]) {
+    int padding_value = data[15];
+    if (padding_value > 15) {
+        return 0;
+    }
+    for (int i = 16 - padding_value; i < 16; i++) {
+        if (data[i] != padding_value) {
+            return 0;
+        }
+    }
+    return padding_value;
+}
+
+
+
 void encrypt_file(char *filepath, twofish_context *context, char* tmppath, ProgressCallback callback) {
     FILE *fp = fopen(filepath, "rb");
     FILE *tmp = fopen(tmppath, "wb");
@@ -257,21 +280,22 @@ void encrypt_file(char *filepath, twofish_context *context, char* tmppath, Progr
     fseek(fp, 0, SEEK_SET);
     long bytesRead = 0;
     float progress = 0;
-
+    int read_size = 0;
     switch (mode) {
         case ECB:
-            while (fread(buf, 1, sizeof(buf), fp) > 0) {
-                
+            while ((read_size = fread(buf, 1, sizeof(buf), fp)) && (read_size > 0)) {
+                add_padding(buf, read_size);
                 encrypt_block(context->key, buf, buf);
                 fwrite(buf, 1, sizeof(buf), tmp);
                 bytesRead += sizeof(buf);
-                progress = (float)bytesRead / fileSize;     
+                progress = (float)bytesRead / fileSize;  
                 callback(progress);
             }
             break;
 
         case CBC:
-            while (fread(buf, 1, sizeof(buf), fp) > 0) {
+            while ((read_size = fread(buf, 1, sizeof(buf), fp)) && (read_size > 0)) {
+                add_padding(buf, read_size);
                 for (int i = 0; i < 16; i++) {
                     buf[i] ^= iv[i];
                 }
@@ -285,7 +309,8 @@ void encrypt_file(char *filepath, twofish_context *context, char* tmppath, Progr
             break;
 
         case CFB:
-            while (fread(buf, 1, sizeof(buf), fp) > 0) {
+            while ((read_size = fread(buf, 1, sizeof(buf), fp)) && (read_size > 0)) {
+                add_padding(buf, read_size);
                 encrypt_block(context->key, iv, iv);
                 for (int i = 0; i < 16; i++) {
                     buf[i] ^= iv[i];
@@ -299,7 +324,8 @@ void encrypt_file(char *filepath, twofish_context *context, char* tmppath, Progr
             break;
 
         case OFB:
-            while (fread(buf, 1, sizeof(buf), fp) > 0) {
+            while ((read_size = fread(buf, 1, sizeof(buf), fp)) && (read_size > 0)) {
+                add_padding(buf, read_size);
                 encrypt_block(context->key, iv, iv);
                 for (int i = 0; i < 16; i++) {
                     buf[i] ^= iv[i];
@@ -339,9 +365,15 @@ void decrypt_file(char *filepath, twofish_context *context, char* tmppath, Progr
             while (fread(buf, 1, sizeof(buf), fp) > 0){
                 
                 decrypt_block(context->key, buf, buf);
-                fwrite(buf, 1, sizeof(buf), tmp);
+
                 bytesRead += sizeof(buf);
                 progress = (float)bytesRead / fileSize;
+                if ((fileSize - bytesRead) == 0){
+                    fwrite(buf, 1, sizeof(buf) - get_padding(buf), tmp);
+                }
+                else{
+                    fwrite(buf, 1, sizeof(buf), tmp);
+                }
                 callback(progress);
             }
             break;
@@ -356,12 +388,19 @@ void decrypt_file(char *filepath, twofish_context *context, char* tmppath, Progr
                 for (int i = 0; i < 16; i++) {
                     buf[i] ^= iv[i];
                 }
-
                 memcpy(iv, temp, 16);
-                fwrite(buf, 1, sizeof(buf), tmp);
+
                 bytesRead += sizeof(buf);
                 progress = (float)bytesRead / fileSize;
+                if ((fileSize - bytesRead) == 0){
+                    fwrite(buf, 1, sizeof(buf) - get_padding(buf), tmp);
+                }
+                else{
+                    fwrite(buf, 1, sizeof(buf), tmp);
+                }
                 callback(progress);
+               
+   
             }
             break;
 
@@ -375,11 +414,16 @@ void decrypt_file(char *filepath, twofish_context *context, char* tmppath, Progr
                     buf[i] ^= iv[i];
                 }
 
-                fwrite(buf, 1, sizeof(buf), tmp);
-                memcpy(iv, temp, 16);
                 bytesRead += sizeof(buf);
                 progress = (float)bytesRead / fileSize;
+                if ((fileSize - bytesRead) == 0){
+                    fwrite(buf, 1, sizeof(buf) - get_padding(buf), tmp);
+                }
+                else{
+                    fwrite(buf, 1, sizeof(buf), tmp);
+                }
                 callback(progress);
+                memcpy(iv, temp, 16);
             }
             break;
 
@@ -389,9 +433,14 @@ void decrypt_file(char *filepath, twofish_context *context, char* tmppath, Progr
                 for (int i = 0; i < 16; i++) {
                     buf[i] ^= iv[i];
                 }
-                fwrite(buf, 1, sizeof(buf), tmp);
                 bytesRead += sizeof(buf);
                 progress = (float)bytesRead / fileSize;
+                if ((fileSize - bytesRead) == 0){
+                    fwrite(buf, 1, sizeof(buf) - get_padding(buf), tmp);
+                }
+                else{
+                    fwrite(buf, 1, sizeof(buf), tmp);
+                }
                 callback(progress);
             }
             break;
